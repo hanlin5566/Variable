@@ -4,13 +4,10 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.hzcf</groupId>
-	<artifactId>${artifactId}</artifactId>
-	<version>${build-version}</version>
-	<packaging>pom</packaging>
+	<artifactId>HJ-Variable</artifactId>
+	<version>1.0</version>
 
 	<properties>
-		<artifactId>HJ-Variable</artifactId>
-		<build-version>0.0.1-SNAPSHOT</build-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
@@ -101,8 +98,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
@@ -131,7 +128,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <finalName>${artifactId}</finalName>
+                    <finalName>${project.artifactId}</finalName>
                     <!--打包打成可shell直接运行的二进制文件-->
                     <executable>true</executable>
 
@@ -140,36 +137,6 @@
                     <execution>
                         <goals>
                             <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
-
-            </plugin>
-            <!--spring-boot-maven-plugin 必须在前面-->
-
-            <!--指定项目生成部署文件策略-->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration> <!--assembly配置-->
-                    <finalName>${artifactId}</finalName>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <!-- not append assembly id in release file name -->
-                    <descriptors><!--描述文件路径-->
-                        <descriptor>${project.basedir}/src/main/assembly/assembly.xml</descriptor>
-                    </descriptors>
-                    <outputDirectory>${project.build.directory}/assembly</outputDirectory>
-
-                </configuration>
-                <executions> <!--执行器 mvn assembly:assembly-->
-                    <execution>
-                        <id>make-assembly</id>
-                        <!--名字任意 -->
-                        <phase>package</phase>
-                        <!-- 绑定到package生命周期阶段上 -->
-                        <goals>
-                            <goal>single</goal>
-                            <!-- 只运行一次 -->
                         </goals>
                     </execution>
                 </executions>
