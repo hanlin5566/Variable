@@ -4,7 +4,6 @@ import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.helpers.LogLog;
@@ -16,9 +15,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoCollection;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.AppenderBase;
 
 /**
@@ -86,22 +83,6 @@ public class MongoDBAppender extends AppenderBase<LoggingEvent> {
 				@SuppressWarnings("unchecked")
 				Map<String,Object> map = (Map<String, Object>)obj;
 				mongoDocument.putAll(map);
-				if(event.getLevel().levelInt == Level.ERROR_INT && event.getThrowableProxy() != null) {
-					//异常日志
-					for (StackTraceElementProxy stackTraceElementProxy : event.getThrowableProxy().getStackTraceElementProxyArray()) {
-						StackTraceElement stackTraceElement = stackTraceElementProxy.getStackTraceElement();
-						if(stackTraceElement.getClassName().indexOf("algorithms") >= 0 ){
-							Map<String,Object> exOutPut = new HashMap<String,Object>();
-							exOutPut.put("fileName",stackTraceElement.getFileName()); 
-							exOutPut.put("lineNumber",stackTraceElement.getLineNumber()); 
-							exOutPut.put("methodName",stackTraceElement.getMethodName()); 
-							exOutPut.put("className", stackTraceElement.getClassName());
-							exOutPut.put("localizedMessage", event.getThrowableProxy().getMessage());
-							mongoDocument.put("exception",exOutPut);
-							break;
-						}
-					}
-				}
 			}
 		}
 		

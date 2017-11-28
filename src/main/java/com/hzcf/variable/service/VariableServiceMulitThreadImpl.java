@@ -1,7 +1,9 @@
 package com.hzcf.variable.service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
@@ -22,7 +24,7 @@ import com.hzcf.variable.log.AlgorithmLog;
 import com.hzcf.variable.log.BehaviorLog;
 import com.hzcf.variable.misc.Constant;
 import com.hzcf.variable.model.Receive;
-import com.hzcf.variable.model.Variable;
+import com.hzcf.variable.model.Variable; 
 
 /**
  * Create by hanlin on 2017年11月21日
@@ -99,26 +101,58 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 						logger.warn(info,JSONObject.toJSON(algorithmLog));
 					}
 				} catch (Throwable e) {
+					success = false;
+					// varDesc,taskId,ruleId,service 
+					String info = String.format(Constant.ALGORITHM_ERROR_INFO, taskId,ruleId,service,varName,e.getMessage());
+					value = "";
+					algorithmLog.setValue(info);
 					//异常处理，如果有一个衍生变量出现异常则整体接口处理失败
 					if(e.getCause() instanceof VariableExecutorException){
-						//自定义异常则拿出变量名
-						//TODO:****堆栈信息还未记录到mongo
 						VariableExecutorException customException = (VariableExecutorException)e.getCause();
+						//自定义异常则拿出变量名
 						varName = customException.getVarNmae();
 						algorithmLog.setVarName(varName);
+						algorithmLog.setSuccess(success);
+						//构造返回值异常提示
 						Map<String, Object> derivedVariable = pool.getDerivedVariable(varName);
 						String className = derivedVariable.get("clazz_name").toString();
 						algorithmLog.setClassName(className);
 						String varDesc = derivedVariable.get("description").toString();
 						String retInfo = String.format(Constant.EXECUTOR_ERROR_INFO,varDesc,taskId,ruleId,service,varName);
 						ret.setMessage(retInfo);
+						//构造记录monggoDB的异常信息
+						Throwable realThrowable = customException.getCause();
+						JSONObject algorithmLogJson = (JSONObject) JSONObject.toJSON(algorithmLog);
+						for (StackTraceElement stackTraceElement : realThrowable.getStackTrace()) {
+							if(stackTraceElement.getClassName().indexOf("algorithms") >= 0 ){
+								Map<String,Object> exOutPut = new HashMap<String,Object>();
+								exOutPut.put("fileName",stackTraceElement.getFileName()); 
+								exOutPut.put("lineNumber",stackTraceElement.getLineNumber()); 
+								exOutPut.put("methodName",stackTraceElement.getMethodName()); 
+								exOutPut.put("className", stackTraceElement.getClassName());
+								exOutPut.put("localizedMessage", realThrowable.getMessage());
+								algorithmLogJson.put("exception",exOutPut);
+								break;
+							}
+						}
+						logger.error(info,algorithmLogJson,e);
+					}else{
+						//未抛出统一的自定义异常，此处应该是代码有问题，需要记录。
+						JSONObject algorithmLogJson = (JSONObject) JSONObject.toJSON(algorithmLog);
+						List<Map<String,Object>> errorlist = new ArrayList<Map<String,Object>>();
+						//打印全部异常堆栈信息
+						for (StackTraceElement stackTraceElement : e.getStackTrace()) {
+								Map<String,Object> exOutPut = new HashMap<String,Object>();
+								exOutPut.put("fileName",stackTraceElement.getFileName()); 
+								exOutPut.put("lineNumber",stackTraceElement.getLineNumber()); 
+								exOutPut.put("methodName",stackTraceElement.getMethodName()); 
+								exOutPut.put("className", stackTraceElement.getClassName());
+								exOutPut.put("localizedMessage", e.getMessage());
+								errorlist.add(exOutPut);
+						}
+						algorithmLogJson.put("errorMsg", "追踪到存在未抛出统一异常的算法，请查看堆栈详情。");
+						logger.error(info,algorithmLogJson,e);
 					}
-					success = false;
-					// varDesc,taskId,ruleId,service 
-					String info = String.format(Constant.ALGORITHM_ERROR_INFO, taskId,ruleId,service,varName,e.getMessage());
-					value = "";
-					algorithmLog.setValue(info);
-					logger.error(info,JSONObject.toJSON(algorithmLog),e);
 				}finally {
 					behaviorLog.addAlgorithm(algorithmLog);
 					retValueMap.put(varName, value);
