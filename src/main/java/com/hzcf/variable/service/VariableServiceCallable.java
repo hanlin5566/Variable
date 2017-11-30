@@ -15,7 +15,7 @@ import com.hzcf.variable.misc.Constant;
  * TODO:根据传入的className和param调用相应的算法,在listener中全部初始化，在系统中为单利模式。注意线程安全。
  * 多列模式需要传入class在此new出来。并且实例中在listener统一写入的变量需要从本地缓存读取。
  **/
-public class VariableServiceCallable implements Callable<Map<String,String>>{
+public class VariableServiceCallable implements Callable<Map<String,Object>>{
 	private DerivedAlgorithms algorithms;
 	private String param;
 	private String retVarName;//返回的变量名
@@ -28,11 +28,11 @@ public class VariableServiceCallable implements Callable<Map<String,String>>{
 	}
 
 	@Override
-	public Map<String,String> call() throws VariableExecutorException {
+	public Map<String,Object> call() throws VariableExecutorException {
 		long sTime = System.currentTimeMillis();
-		HashMap<String, String> ret = new HashMap<String,String>();
+		HashMap<String, Object> ret = new HashMap<String,Object>();
 		ret.put("retVarName", retVarName);
-		String value = "";
+		Object value = "";
 		try {
 			value = algorithms.execute(this.param);
 		} catch (Exception e) {

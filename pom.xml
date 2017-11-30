@@ -31,7 +31,21 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
+			<exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
 		</dependency>
+		
+		 <!--启用undertow容器-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-undertow</artifactId>
+            <version>1.4.7.RELEASE</version>
+        </dependency>
+		
 		<!-- string aop -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -150,6 +164,11 @@
             <id>spring</id>
             <url>http://repo.spring.io/plugins-release/</url>
         </repository>
+         <repository>
+            <id>hz_maven_repositories</id>
+            <url>http://192.168.1.104:8071/repository/hz_maven_repositories/</url>
+        </repository>
+        
     </repositories>
 	
 </project>

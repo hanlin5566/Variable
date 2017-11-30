@@ -45,7 +45,7 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 		Date sTime = new Date();
 		Variable ret = new Variable();
 		boolean success = true;
-		Map<String,String> retValueMap = new HashMap<String,String>();
+		Map<String,Object> retValueMap = new HashMap<String,Object>();
 		//接口传入的service name
 		String service = rec.getService();
 		JSONObject param = rec.getParam();
@@ -69,7 +69,7 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 		}else{
 			//根据衍生变量个数初始化线程池个数
 			ExecutorService threadPool = Executors.newFixedThreadPool(algorithms.size());
-			CompletionService<Map<String,String>> cs = new ExecutorCompletionService<Map<String,String>>(threadPool);
+			CompletionService<Map<String,Object>> cs = new ExecutorCompletionService<Map<String,Object>>(threadPool);
 			//提交线程
 			for (String varName : algorithms.keySet()) {
 				DerivedAlgorithms derivedAlgorithms = algorithms.get(varName);
@@ -79,19 +79,19 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 			//获取所有返回值
 			for (int i = 0; i<algorithms.keySet().size();i++) {
 				//衍生变量缓存信息
-				String value = Constant.DATA_UNKNOWN;
+				Object value = Constant.DATA_UNKNOWN;
 				String varName = Constant.DATA_UNKNOWN;
-				AlgorithmLog algorithmLog = new AlgorithmLog(ruleId,taskId,service,value,Constant.DATA_UNKNOWN,param,requestIP,value,0,true);
+				AlgorithmLog algorithmLog = new AlgorithmLog(ruleId,taskId,service,varName,Constant.DATA_UNKNOWN,param,requestIP,value,0,true);
 				try {
-					Map<String,String> result = cs.take().get();
+					Map<String,Object> result = cs.take().get();
 					//TODO:不全相应线程的信息，有时间改造一下。
-					varName = result.get("retVarName");
+					varName = result.get("retVarName").toString();
 					Map<String, Object> derivedVariable = pool.getDerivedVariable(varName);
 					String className = derivedVariable.get("clazz_name").toString();
 					algorithmLog.setVarName(varName);
 					algorithmLog.setClassName(className);
-					value = result.get(varName);
-					String usedTime = result.get(Constant.USED_TIME);
+					value = result.get(varName).toString();
+					String usedTime = result.get(Constant.USED_TIME).toString();
 					long usedTime_long = Long.parseLong(usedTime);
 					algorithmLog.setUsedTime(usedTime_long);
 					algorithmLog.setValue(value);
