@@ -9,7 +9,7 @@ import java.util.Map;
 public class Variable {
 	private boolean success;
 	private String message;
-	private Map<String,String> value;
+	private Map<String,Object> value;
 	public boolean isSuccess() {
 		return success;
 	}
@@ -22,10 +22,10 @@ public class Variable {
 	public void setMessage(String message) {
 		this.message = message;
 	}
-	public Map<String, String> getValue() {
+	public Map<String, Object> getValue() {
 		return value;
 	}
-	public void setValue(Map<String, String> value) {
+	public void setValue(Map<String, Object> value) {
 		this.value = value;
 	}
 }

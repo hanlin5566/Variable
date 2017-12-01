@@ -43,7 +43,7 @@ public class AlgorithmLog{
 	/**
 	 * 接口回传
 	 */
-	private String value;
+	private Object value;
 	/**
 	 * 耗时
 	 */
@@ -53,7 +53,7 @@ public class AlgorithmLog{
 	 */
 	private boolean success;
 	public AlgorithmLog(String ruleId, String taskId, String interfaceName, String varName, String className,
-			JSONObject param, String requestIP, String value, long usedTime, boolean success) {
+			JSONObject param, String requestIP, Object value, long usedTime, boolean success) {
 		super();
 		this.ruleId = ruleId;
 		this.taskId = taskId;
@@ -108,10 +108,10 @@ public class AlgorithmLog{
 	public void setRequestIP(String requestIP) {
 		this.requestIP = requestIP;
 	}
-	public String getValue() {
+	public Object getValue() {
 		return value;
 	}
-	public void setValue(String value) {
+	public void setValue(Object value) {
 		this.value = value;
 	}
 	public long getUsedTime() {
