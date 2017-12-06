@@ -90,7 +90,8 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 					String className = derivedVariable.get("clazz_name").toString();
 					algorithmLog.setVarName(varName);
 					algorithmLog.setClassName(className);
-					value = result.get(varName).toString();
+					//如果执行正确，但是返回值为空，则取默认值。
+					value = result.get(varName) == null ? derivedVariable.get("default_value"):result.get(varName);
 					String usedTime = result.get(Constant.USED_TIME).toString();
 					long usedTime_long = Long.parseLong(usedTime);
 					algorithmLog.setUsedTime(usedTime_long);

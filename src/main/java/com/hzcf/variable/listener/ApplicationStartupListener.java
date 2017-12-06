@@ -50,7 +50,10 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
 			String varName = var.get("var_ret_name").toString();//返回name系统内的唯一标识
 			int varType = Integer.parseInt(var.get("var_type").toString());//衍生变量类型，1为直接变量，2为衍生变量。
 			//如果为直接变量，则添加默认的直接变量处理类。
-			String className = varType ==1?Constant.DIRECT_VARIABLE_ALGORITHMS:var.get("clazz_name").toString();
+			if(var.get("clazz_name") == null && varType == 1){
+				var.put("clazz_name", Constant.DIRECT_VARIABLE_ALGORITHMS);
+			}
+			String className = var.get("clazz_name").toString();
 			try {
 				// 同一个class，在同一个classLoader只存在一个。
 				if (!classNameMap.containsKey(className)) {
