@@ -1,13 +1,13 @@
 package com.hzcf.variable.model;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 
 /**
  * Create by hanlin on 2017年11月21日
  **/
 public class Receive {
 	private String service;
-	private JSONObject param;
+	private JSON jsonParam;
 	private String ruleId;
 	private String taskId;
 	private String requestIP;
@@ -35,10 +35,11 @@ public class Receive {
 	public void setService(String service) {
 		this.service = service;
 	}
-	public JSONObject getParam() {
-		return param;
+	public JSON getJSONParam() {
+		return jsonParam;
 	}
-	public void setParam(JSONObject param) {
-		this.param = param;
+	
+	public void setJSONParam(JSON jsonParam) {
+		this.jsonParam = jsonParam;
 	}
 }

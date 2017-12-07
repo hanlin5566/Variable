@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.hzcf.variable.engine.AlgorithmPool;
 import com.hzcf.variable.engine.DerivedAlgorithms;
@@ -48,7 +49,7 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 		Map<String,Object> retValueMap = new HashMap<String,Object>();
 		//接口传入的service name
 		String service = rec.getService();
-		JSONObject param = rec.getParam();
+		JSON param = rec.getJSONParam();
 		String param_str = param.toJSONString();
 		String taskId = rec.getTaskId();
 		String ruleId = rec.getRuleId();

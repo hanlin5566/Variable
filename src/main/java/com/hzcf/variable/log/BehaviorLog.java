@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.hzcf.variable.model.Variable;
 
 /**
@@ -27,7 +27,7 @@ public class BehaviorLog{
 	/**
 	 * 接口入参
 	 */
-	private JSONObject param;
+	private JSON param;
 	/**
 	 * 访问IP
 	 */
@@ -62,7 +62,7 @@ public class BehaviorLog{
 	 */
 	List<AlgorithmLog> algorithmsList = new ArrayList<AlgorithmLog>();
 	
-	public BehaviorLog(String ruleId, String taskId, String interfaceName, JSONObject param, String requestIP, Date sTime) {
+	public BehaviorLog(String ruleId, String taskId, String interfaceName, JSON param, String requestIP, Date sTime) {
 		super();
 		this.ruleId = ruleId;
 		this.taskId = taskId;
@@ -107,10 +107,10 @@ public class BehaviorLog{
 	public void setInterfaceName(String interfaceName) {
 		this.interfaceName = interfaceName;
 	}
-	public JSONObject getParam() {
+	public JSON getParam() {
 		return param;
 	}
-	public void setParam(JSONObject param) {
+	public void setParam(JSON param) {
 		this.param = param;
 	}
 	public Variable getResult() {

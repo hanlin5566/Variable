@@ -1,6 +1,6 @@
 package com.hzcf.variable.log;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 
 /**
  * Create by hanlin on 2017年11月23日
@@ -31,7 +31,7 @@ public class AlgorithmLog{
 	/**
 	 * 接口入参
 	 */
-	private JSONObject param;
+	private JSON param;
 	/**
 	 * 访问IP
 	 */
@@ -53,7 +53,7 @@ public class AlgorithmLog{
 	 */
 	private boolean success;
 	public AlgorithmLog(String ruleId, String taskId, String interfaceName, String varName, String className,
-			JSONObject param, String requestIP, Object value, long usedTime, boolean success) {
+			JSON param, String requestIP, Object value, long usedTime, boolean success) {
 		super();
 		this.ruleId = ruleId;
 		this.taskId = taskId;
@@ -96,10 +96,10 @@ public class AlgorithmLog{
 	public void setClassName(String className) {
 		this.className = className;
 	}
-	public JSONObject getParam() {
+	public JSON getParam() {
 		return param;
 	}
-	public void setParam(JSONObject param) {
+	public void setParam(JSON param) {
 		this.param = param;
 	}
 	public String getRequestIP() {
