@@ -24,6 +24,7 @@ import com.hzcf.variable.exception.VariableExecutorException;
 import com.hzcf.variable.log.AlgorithmLog;
 import com.hzcf.variable.log.BehaviorLog;
 import com.hzcf.variable.misc.Constant;
+import com.hzcf.variable.misc.GlobalLock;
 import com.hzcf.variable.model.Receive;
 import com.hzcf.variable.model.Variable; 
 
@@ -55,6 +56,8 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 		String ruleId = rec.getRuleId();
 		String requestIP = rec.getRequestIP();
 		BehaviorLog behaviorLog = new BehaviorLog(ruleId,taskId,service,param,requestIP,sTime);//接口行为日志。
+		//加读锁
+		GlobalLock.readLock.lock();
 		//根据接口取得此接口下全部衍生变量
 		Map<String,DerivedAlgorithms> algorithms = pool.getAlgorithms(service);
 		if(algorithms == null){
@@ -85,9 +88,9 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 				AlgorithmLog algorithmLog = new AlgorithmLog(ruleId,taskId,service,varName,Constant.DATA_UNKNOWN,param,requestIP,value,0,true);
 				try {
 					Map<String,Object> result = cs.take().get();
-					//TODO:不全相应线程的信息，有时间改造一下。
+					//TODO:补全相应线程的信息，有时间改造一下。
 					varName = result.get("retVarName").toString();
-					Map<String, Object> derivedVariable = pool.getDerivedVariable(varName);
+					Map<String, Object> derivedVariable = pool.getAlgorithm(service, varName).getVar();
 					String className = derivedVariable.get("clazz_name").toString();
 					algorithmLog.setVarName(varName);
 					algorithmLog.setClassName(className);
@@ -116,7 +119,7 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 						algorithmLog.setVarName(varName);
 						algorithmLog.setSuccess(success);
 						//构造返回值异常提示
-						Map<String, Object> derivedVariable = pool.getDerivedVariable(varName);
+						Map<String, Object> derivedVariable = pool.getAlgorithm(service, varName).getVar();
 						String className = derivedVariable.get("clazz_name").toString();
 						algorithmLog.setClassName(className);
 						String varDesc = derivedVariable.get("description").toString();
@@ -163,6 +166,7 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 			ret.setSuccess(success);
 			ret.setValue(retValueMap);
 			threadPool.shutdown();
+			
 			//接口总日志
 			Date eTime = new Date();
 			long usedTime = eTime.getTime() - sTime.getTime();
@@ -174,6 +178,8 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 			//设置结束信息
 			this.setEndingInfo(behaviorLog, ret, eTime,usedTime , success);
 			logger.info(ret.getMessage(),JSONObject.toJSON(behaviorLog));
+			//释放读锁
+			GlobalLock.readLock.unlock();
 		}
 		return ret;
 	}

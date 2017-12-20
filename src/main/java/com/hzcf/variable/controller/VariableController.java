@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.hzcf.variable.engine.AlgorithmPool;
 import com.hzcf.variable.misc.IPUtils;
 import com.hzcf.variable.model.Receive;
 import com.hzcf.variable.model.Variable;
@@ -30,9 +31,12 @@ public class VariableController {
 	
 	@Autowired VariableService varService;
 	
+	@Autowired
+	private AlgorithmPool algorithmPool;
+	
 	@ApiOperation(value = "执行衍生变量", notes = "根据传入的衍生接口名称，解析参数，返回衍生变量")
 	@RequestMapping(value = { "" }, method = RequestMethod.POST)
-	public Variable getDerivedVariableList(HttpServletRequest request) {
+	public Variable execute(HttpServletRequest request) {
 		InputStream inputStream = null;
 		Receive rec = new Receive();
         try {
@@ -57,5 +61,11 @@ public class VariableController {
 			return ret;
 		}
 		return varService.execute(rec);
+	}
+	
+	@ApiOperation(value = "刷新衍生变量", notes = "重新从持久层中读取衍生变量")
+	@RequestMapping(value = { "" }, method = RequestMethod.GET)
+	public String refresh() {
+		return algorithmPool.readVariable();
 	}
 }

@@ -28,4 +28,6 @@ public class Constant {
 	public static final String EXECUTOR_RESULT_INFO = "衍生变量处理结果日志-taskId:[%s],ruleId:[%s],接口:[%s],总耗时:[%s]。";
 	//
 	public static final String DATA_UNKNOWN = "UNKNOWN";
+	
+	public static final String SUCCESS = "success";
 }

@@ -10,4 +10,5 @@ public interface DerivedAlgorithms {
 	public Object execute(String param) throws Exception;
 	public void setVarName(String varName);
 	public void setVar(Map<String,Object> var);//数据库中相应变量的信息
+	public Map<String,Object> getVar();//数据库中相应变量的信息
 }
