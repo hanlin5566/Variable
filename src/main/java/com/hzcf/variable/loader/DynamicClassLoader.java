@@ -14,7 +14,7 @@ public class DynamicClassLoader extends ClassLoader {
      * @return
      * @throws ClassNotFoundException
      */
-    public Class<?> generateClass(String classFullName,byte[] raw)throws ClassNotFoundException {
+    public Class<?> generateClass(String classFullName,byte[] raw)throws Exception {
         // definClass方法参数说明：name：类包的全路径如com.hzcf.client.BaseClient
         //                         b：读取的class文件的byte数组
         //                         off：从byte数组中读取的索引

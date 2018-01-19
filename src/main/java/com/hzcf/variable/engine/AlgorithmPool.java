@@ -105,16 +105,16 @@ public class AlgorithmPool {
 				putAlgorithm(templateAlgorithmPool,service, varName, algorithms);
 				logger.info(String.format("初始化接口:[%s],变量名:[%s],算法:[%s]", service, varName, algorithms.getClass().getName()));
 			} catch (ClassNotFoundException notFound) {
-				info = "加载算法失败,无法找到类:" + className;
+				info = "加载算法["+varName+"]失败,无法找到类:" + className;
 				logger.error(info,notFound);
 			} catch (ClassCastException classCast) {
-				info = "加载算法失败,类未实现DerivedAlgorithms接口";
+				info = "加载算法["+varName+"]失败,类未实现DerivedAlgorithms接口";
 				logger.error(info, classCast);
 			} catch (NullPointerException nullPointerException) {
-				info = "加载算法失败,实例化算法为空";
+				info = "加载算法["+varName+"]失败,实例化算法为空";
 				logger.error(info, nullPointerException);
 			} catch (Exception e) {
-				info = "加载算法失败," + e.getCause();
+				info = "加载算法["+varName+"]失败," + e.getCause();
 				logger.error(info, e.fillInStackTrace());
 			}
 		}
