@@ -58,95 +58,96 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 		BehaviorLog behaviorLog = new BehaviorLog(ruleId,taskId,service,param,requestIP,sTime);//接口行为日志。
 		//加读锁
 		GlobalLock.readLock.lock();
-		//根据接口取得此接口下全部衍生变量
-		Map<String,DerivedAlgorithms> algorithms = pool.getAlgorithms(service);
-		if(algorithms == null){
-			//此接口无衍生变量
-			String retInfo = String.format(Constant.VAR_NOT_FOUND, service);
-			ret.setMessage(retInfo);
-			ret.setSuccess(false);
-			ret.setValue(retValueMap);
-			Date eTime = new Date();
-			long usedTime = eTime.getTime() - sTime.getTime();
-			this.setEndingInfo(behaviorLog, ret, eTime,usedTime , success);
-			logger.error(retInfo, JSONObject.toJSON(behaviorLog));
-		}else{
-			//根据衍生变量个数初始化线程池个数
-			ExecutorService threadPool = Executors.newFixedThreadPool(algorithms.size());
-			CompletionService<Map<String,Object>> cs = new ExecutorCompletionService<Map<String,Object>>(threadPool);
-			//提交线程
-			for (String varName : algorithms.keySet()) {
-				DerivedAlgorithms derivedAlgorithms = algorithms.get(varName);
-				VariableServiceCallable variableServiceCallable = new VariableServiceCallable(derivedAlgorithms, param_str,varName);
-				cs.submit(variableServiceCallable);
-			}
-			//获取所有返回值
-			for (int i = 0; i<algorithms.keySet().size();i++) {
-				//衍生变量缓存信息
-				Object value = Constant.DATA_UNKNOWN;
-				String varName = Constant.DATA_UNKNOWN;
-				AlgorithmLog algorithmLog = new AlgorithmLog(ruleId,taskId,service,varName,Constant.DATA_UNKNOWN,param,requestIP,value,0,true);
-				try {
-					Map<String,Object> result = cs.take().get();
-					//TODO:补全相应线程的信息，有时间改造一下。
-					varName = result.get("retVarName").toString();
-					Map<String, Object> derivedVariable = pool.getAlgorithm(service, varName).getVar();
-					String className = derivedVariable.get("clazz_name").toString();
-					algorithmLog.setVarName(varName);
-					algorithmLog.setClassName(className);
-					//如果执行正确，但是返回值为空，则取默认值。
-					value = result.get(varName) == null ? derivedVariable.get("default_value"):result.get(varName);
-					String usedTime = result.get(Constant.USED_TIME).toString();
-					long usedTime_long = Long.parseLong(usedTime);
-					algorithmLog.setUsedTime(usedTime_long);
-					algorithmLog.setValue(value);
-					if(usedTime_long >= slowTimeThreshold){
-						//超出阈值，记录慢查询日志。
-						String info = String.format(Constant.SLOW_EXECUTOR_INFO, taskId,ruleId,service,varName,usedTime);
-						logger.warn(info,JSONObject.toJSON(algorithmLog));
-					}
-				} catch (Throwable e) {
-					success = false;
-					// varDesc,taskId,ruleId,service 
-					String info = String.format(Constant.ALGORITHM_ERROR_INFO, taskId,ruleId,service,varName,e.getMessage());
-					value = "";
-					algorithmLog.setValue(info);
-					//异常处理，如果有一个衍生变量出现异常则整体接口处理失败
-					if(e.getCause() instanceof VariableExecutorException){
-						VariableExecutorException customException = (VariableExecutorException)e.getCause();
-						//自定义异常则拿出变量名
-						varName = customException.getVarNmae();
-						algorithmLog.setVarName(varName);
-						algorithmLog.setSuccess(success);
-						//构造返回值异常提示
+		try {
+			//根据接口取得此接口下全部衍生变量
+			Map<String,DerivedAlgorithms> algorithms = pool.getAlgorithms(service);
+			if(algorithms == null){
+				//此接口无衍生变量
+				String retInfo = String.format(Constant.VAR_NOT_FOUND, service);
+				ret.setMessage(retInfo);
+				ret.setSuccess(false);
+				ret.setValue(retValueMap);
+				Date eTime = new Date();
+				long usedTime = eTime.getTime() - sTime.getTime();
+				this.setEndingInfo(behaviorLog, ret, eTime,usedTime , success);
+				logger.error(retInfo, JSONObject.toJSON(behaviorLog));
+			}else{
+				//根据衍生变量个数初始化线程池个数
+				ExecutorService threadPool = Executors.newFixedThreadPool(algorithms.size());
+				CompletionService<Map<String,Object>> cs = new ExecutorCompletionService<Map<String,Object>>(threadPool);
+				//提交线程
+				for (String varName : algorithms.keySet()) {
+					DerivedAlgorithms derivedAlgorithms = algorithms.get(varName);
+					VariableServiceCallable variableServiceCallable = new VariableServiceCallable(derivedAlgorithms, param_str,varName);
+					cs.submit(variableServiceCallable);
+				}
+				//获取所有返回值
+				for (int i = 0; i<algorithms.keySet().size();i++) {
+					//衍生变量缓存信息
+					Object value = Constant.DATA_UNKNOWN;
+					String varName = Constant.DATA_UNKNOWN;
+					AlgorithmLog algorithmLog = new AlgorithmLog(ruleId,taskId,service,varName,Constant.DATA_UNKNOWN,param,requestIP,value,0,true);
+					try {
+						Map<String,Object> result = cs.take().get();
+						//TODO:补全相应线程的信息，有时间改造一下。
+						varName = result.get("retVarName").toString();
 						Map<String, Object> derivedVariable = pool.getAlgorithm(service, varName).getVar();
 						String className = derivedVariable.get("clazz_name").toString();
+						algorithmLog.setVarName(varName);
 						algorithmLog.setClassName(className);
-						String varDesc = derivedVariable.get("description").toString();
-						String retInfo = String.format(Constant.EXECUTOR_ERROR_INFO,varDesc,taskId,ruleId,service,varName);
-						ret.setMessage(retInfo);
-						//构造记录monggoDB的异常信息
-						Throwable realThrowable = customException.getCause();
-						JSONObject algorithmLogJson = (JSONObject) JSONObject.toJSON(algorithmLog);
-						for (StackTraceElement stackTraceElement : realThrowable.getStackTrace()) {
-							if(stackTraceElement.getClassName().indexOf("algorithms") >= 0 ){
-								Map<String,Object> exOutPut = new HashMap<String,Object>();
-								exOutPut.put("fileName",stackTraceElement.getFileName()); 
-								exOutPut.put("lineNumber",stackTraceElement.getLineNumber()); 
-								exOutPut.put("methodName",stackTraceElement.getMethodName()); 
-								exOutPut.put("className", stackTraceElement.getClassName());
-								exOutPut.put("localizedMessage", realThrowable.getMessage());
-								algorithmLogJson.put("exception",exOutPut);
-								break;
-							}
+						//如果执行正确，但是返回值为空，则取默认值。
+						value = result.get(varName) == null ? derivedVariable.get("default_value"):result.get(varName);
+						String usedTime = result.get(Constant.USED_TIME).toString();
+						long usedTime_long = Long.parseLong(usedTime);
+						algorithmLog.setUsedTime(usedTime_long);
+						algorithmLog.setValue(value);
+						if(usedTime_long >= slowTimeThreshold){
+							//超出阈值，记录慢查询日志。
+							String info = String.format(Constant.SLOW_EXECUTOR_INFO, taskId,ruleId,service,varName,usedTime);
+							logger.warn(info,JSONObject.toJSON(algorithmLog));
 						}
-						logger.error(info,algorithmLogJson,e);
-					}else{
-						//未抛出统一的自定义异常，此处应该是代码有问题，需要记录。
-						JSONObject algorithmLogJson = (JSONObject) JSONObject.toJSON(algorithmLog);
-						List<Map<String,Object>> errorlist = new ArrayList<Map<String,Object>>();
-						//打印全部异常堆栈信息
-						for (StackTraceElement stackTraceElement : e.getStackTrace()) {
+					} catch (Throwable e) {
+						success = false;
+						// varDesc,taskId,ruleId,service 
+						String info = String.format(Constant.ALGORITHM_ERROR_INFO, taskId,ruleId,service,varName,e.getMessage());
+						value = "";
+						algorithmLog.setValue(info);
+						//异常处理，如果有一个衍生变量出现异常则整体接口处理失败
+						if(e.getCause() instanceof VariableExecutorException){
+							VariableExecutorException customException = (VariableExecutorException)e.getCause();
+							//自定义异常则拿出变量名
+							varName = customException.getVarNmae();
+							algorithmLog.setVarName(varName);
+							algorithmLog.setSuccess(success);
+							//构造返回值异常提示
+							Map<String, Object> derivedVariable = pool.getAlgorithm(service, varName).getVar();
+							String className = derivedVariable.get("clazz_name").toString();
+							algorithmLog.setClassName(className);
+							String varDesc = derivedVariable.get("description").toString();
+							String retInfo = String.format(Constant.EXECUTOR_ERROR_INFO,varDesc,taskId,ruleId,service,varName);
+							ret.setMessage(retInfo);
+							//构造记录monggoDB的异常信息
+							Throwable realThrowable = customException.getCause();
+							JSONObject algorithmLogJson = (JSONObject) JSONObject.toJSON(algorithmLog);
+							for (StackTraceElement stackTraceElement : realThrowable.getStackTrace()) {
+								if(stackTraceElement.getClassName().indexOf("algorithms") >= 0 ){
+									Map<String,Object> exOutPut = new HashMap<String,Object>();
+									exOutPut.put("fileName",stackTraceElement.getFileName()); 
+									exOutPut.put("lineNumber",stackTraceElement.getLineNumber()); 
+									exOutPut.put("methodName",stackTraceElement.getMethodName()); 
+									exOutPut.put("className", stackTraceElement.getClassName());
+									exOutPut.put("localizedMessage", realThrowable.getMessage());
+									algorithmLogJson.put("exception",exOutPut);
+									break;
+								}
+							}
+							logger.error(info,algorithmLogJson,e);
+						}else{
+							//未抛出统一的自定义异常，此处应该是代码有问题，需要记录。
+							JSONObject algorithmLogJson = (JSONObject) JSONObject.toJSON(algorithmLog);
+							List<Map<String,Object>> errorlist = new ArrayList<Map<String,Object>>();
+							//打印全部异常堆栈信息
+							for (StackTraceElement stackTraceElement : e.getStackTrace()) {
 								Map<String,Object> exOutPut = new HashMap<String,Object>();
 								exOutPut.put("fileName",stackTraceElement.getFileName()); 
 								exOutPut.put("lineNumber",stackTraceElement.getLineNumber()); 
@@ -154,30 +155,32 @@ public class VariableServiceMulitThreadImpl implements VariableService{
 								exOutPut.put("className", stackTraceElement.getClassName());
 								exOutPut.put("localizedMessage", e.getMessage());
 								errorlist.add(exOutPut);
+							}
+							algorithmLogJson.put("errorMsg", "追踪到存在未抛出统一异常的算法，请查看堆栈详情。");
+							logger.error(info,algorithmLogJson,e);
 						}
-						algorithmLogJson.put("errorMsg", "追踪到存在未抛出统一异常的算法，请查看堆栈详情。");
-						logger.error(info,algorithmLogJson,e);
+					}finally {
+						behaviorLog.addAlgorithm(algorithmLog);
+						retValueMap.put(varName, value);
 					}
-				}finally {
-					behaviorLog.addAlgorithm(algorithmLog);
-					retValueMap.put(varName, value);
 				}
+				ret.setSuccess(success);
+				ret.setValue(retValueMap);
+				threadPool.shutdown();
+				
+				//接口总日志
+				Date eTime = new Date();
+				long usedTime = eTime.getTime() - sTime.getTime();
+				if(success){
+					//设置正确的提示。
+					String info = String.format(Constant.EXECUTOR_RESULT_INFO, taskId,ruleId,service,usedTime);
+					ret.setMessage(info);
+				}
+				//设置结束信息
+				this.setEndingInfo(behaviorLog, ret, eTime,usedTime , success);
+				logger.info(ret.getMessage(),JSONObject.toJSON(behaviorLog));
 			}
-			ret.setSuccess(success);
-			ret.setValue(retValueMap);
-			threadPool.shutdown();
-			
-			//接口总日志
-			Date eTime = new Date();
-			long usedTime = eTime.getTime() - sTime.getTime();
-			if(success){
-				//设置正确的提示。
-				String info = String.format(Constant.EXECUTOR_RESULT_INFO, taskId,ruleId,service,usedTime);
-				ret.setMessage(info);
-			}
-			//设置结束信息
-			this.setEndingInfo(behaviorLog, ret, eTime,usedTime , success);
-			logger.info(ret.getMessage(),JSONObject.toJSON(behaviorLog));
+		} finally{
 			//释放读锁
 			GlobalLock.readLock.unlock();
 		}

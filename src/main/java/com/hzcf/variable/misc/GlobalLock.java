@@ -3,7 +3,7 @@ package com.hzcf.variable.misc;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class GlobalLock {
-    private static ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock(true);
+    public static ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock(true);
 
     public static ReentrantReadWriteLock.ReadLock readLock = reentrantReadWriteLock.readLock();
 
